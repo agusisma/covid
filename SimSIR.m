@@ -9,7 +9,7 @@ clc;
 R0    = 3.0;       % basic reproduction number (https://www.ncbi.nlm.nih.gov/pubmed/32048815)
 
 % Epidemic/pandemic is when R0>1. Current real-time estimate for R0 is between 2.8 and
-% 3.3. Lockdown and social distancing could reduce R0 , hence flatten the
+% 3.3. Lockdown and social distancing could reduce R0, hence flatten the
 % infection curve
 
 N     = 264000000; % total population (Indonesia)
@@ -17,6 +17,7 @@ Ni0   = 514;       % initial number of cases 22.03 (https://www.worldometers.inf
 ti    = 10;        % mean of infection time (https://annals.org/aim/fullarticle/2762808/incubation-period-coronavirus-disease-2019-covid-19-from-publicly-reported)
 B     = 0.06;      % critical beds requirement (https://www.ncbi.nlm.nih.gov/pubmed/32009128)
 Ba    = 1.21;      % number of beds per 1000 of population (https://investor.id/national/rasio-bed-dibanding-populasi-di-indonesia-masih-rendah)
+BaR   = 1.21*0.1;  % realistic number of beds per 1000 of population, probably only 10% available for covid-19
 M     = 0.01;      % mortality rate (https://www.theguardian.com/world/2020/mar/22/what-is-coronavirus-and-what-is-the-mortality-rate)
 
 % variance used in Monte Carlo simulation
@@ -87,17 +88,19 @@ grid minor
 
 figure(2)
 subplot(2,1,1)
-plot(td,B*N*y2M(1,1:tf)*(100000/N),'r','LineWidth',3);
+plot(td,B*N*y2M(1,1:tf)*(100000/N),'-r','LineWidth',3);
 hold on
 plot(td,100*Ba*ones(tf,1),'g','LineWidth',3);
+hold on
+plot(td,100*BaR*ones(tf,1),'--g','LineWidth',3);
 title('Number of available beds / 10^5 of population');
 xlabel('Date');
 set(gca,'FontSize',24)
-legend('Needed','Available')
+legend('Needed','Available (total)','Available (for Covid)')
 grid on;
 grid minor;
 subplot(2,1,2)
-plot(td,[zeros(1,10) M*N*y2M(1,1:tf-10)*(100000/N)/ti],'b','LineWidth',3);
+plot(td,[zeros(1,10) M*N*y2M(1,1:tf-10)*(100000/N)/ti],'-b','LineWidth',3);
 title('Mortality rate / 10^5 of population');
 xlabel('Date');
 set(gca,'FontSize',24)
