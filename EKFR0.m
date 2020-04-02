@@ -3,7 +3,7 @@
 % This code is to estimate the value of R0 based on Extended Kalman Filter
 % The data were taken from 14.02 until 30.03
 
-clear all;
+clear;
 clc;
 
 %%
@@ -15,7 +15,9 @@ tf  = 45;
 dt  = 0.01;
 t   = dt:dt:tf;
 td  = datetime(2020,2,14) + caldays(1:tf);
-N   = 264000000;
+N   = 264000000;                % number of population
+CFR = 0.04;                     % death rate 4%
+Ti  = 10;                       % infection time
 
 %% Measurement matrix
 
@@ -29,12 +31,12 @@ QF = 0.001*eye(5);
 RF = 0.001*eye(4);
 
 %% Initialization
-xhat     = [264000000-1; 1; 0; 0; 1]; % initial condition 14.02
+xhat     = [N-1; 1; 0; 0; 1]; % initial condition 14.02
 Pplus    = 0*eye(5);
 
 %% Paramater
-gamma = 0.1;
-kappa = 0.001;
+gamma = (1-CFR)*(1/Ti);
+kappa = CFR*1/Ti;
 
 %% For plotting
 
@@ -48,16 +50,16 @@ for i=1:(tf/dt)
      
      % prediction
      
-     xhat(1) = xhat(1)-gamma*xhat(5)*xhat(1)*xhat(2)*dt/N;
-     xhat(2) = xhat(2)+gamma*xhat(5)*xhat(1)*xhat(2)*dt/N-gamma*xhat(2)*dt;
+     xhat(1) = xhat(1)-(gamma+kappa)*xhat(5)*xhat(1)*xhat(2)*dt/N;
+     xhat(2) = xhat(2)+(gamma+kappa)*xhat(5)*xhat(1)*xhat(2)*dt/N-(gamma+kappa)*xhat(2)*dt;
      xhat(3) = xhat(3)+gamma*xhat(2)*dt;
      xhat(4) = xhat(4)+kappa*xhat(2)*dt;
      xhat(5) = xhat(5);
 
     % Extended Kalman filter
     % calculating the Jacobian matrix
-    FX    = [1-gamma*xhat(5)*xhat(2)*dt/N -gamma*xhat(5)*xhat(1)*dt/N 0 0 -gamma*xhat(1)*xhat(2)*dt/N;
-             gamma*xhat(5)*xhat(2)*dt/N-gamma*xhat(2)*dt 1+gamma*xhat(5)*xhat(1)*dt/N-gamma*dt 0 0 gamma*xhat(1)*xhat(2)*dt/N;
+    FX    = [1-(gamma+kappa)*xhat(5)*xhat(2)*dt/N -(gamma+kappa)*xhat(5)*xhat(1)*dt/N 0 0 -(gamma+kappa)*xhat(1)*xhat(2)*dt/N;
+             (gamma+kappa)*xhat(5)*xhat(2)*dt/N-(gamma+kappa)*xhat(2)*dt 1+(gamma+kappa)*xhat(5)*xhat(1)*dt/N-(gamma+kappa)*dt 0 0 (gamma+kappa)*xhat(1)*xhat(2)*dt/N;
              0 gamma*dt 1 0 0;
              0 kappa*dt 0 1 0;
              0 0 0 0 1];
