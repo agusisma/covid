@@ -1,6 +1,6 @@
 %% Research code by Agus Hasan
 
-% This code is to estimate the value of R0 based on Extended Kalman Filter
+% This code is used to estimate the value of basic reproduction number (R0) based on Extended Kalman Filter
 % The data were taken from 14.02 until 30.03
 
 clear;
