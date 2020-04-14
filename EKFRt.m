@@ -146,11 +146,12 @@ curve1 = H + sigma*std_dev;
 curve2 = H - sigma*std_dev;
 x2 = [td, fliplr(td)];
 inBetween = [curve1, fliplr(curve2)];
-fill(x2, inBetween, 'g');
+fill(x2, inBetween, 'k');
+alpha(0.5)
 hold on;
-plot(td,H,'LineWidth',6)
+plot(td,H,'k','LineWidth',6)
 hold on
-plot(td,ones(1,tf),'LineWidth',6)
+plot(td,ones(1,tf),'r','LineWidth',6)
 title('Estimasi Angka Reproduksi Harian (Rt)')
 xlabel('Tanggal');
 set(gca,'FontSize',24)
