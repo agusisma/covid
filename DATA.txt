@@ -1,3 +1,4 @@
+% month | date | suspected | active cases | cummilative recovered | cummulative death
 2	15	264000000	0	0	0
 2	16	264000000	0	0	0
 2	17	264000000	0	0	0
