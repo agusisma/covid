@@ -52,7 +52,7 @@ xhatArray  = [];
 for i=1:((tf-1)/dt)
      xhatArray = [xhatArray xhat]; 
      
-     % prediction
+     % prediction using discrete-time stochastic augmented compartmental model
      
      xhat(1) = xhat(1)-(gamma+kappa)*xhat(5)*xhat(1)*xhat(2)*dt/N;
      xhat(2) = xhat(2)+(gamma+kappa)*xhat(5)*xhat(1)*xhat(2)*dt/N-(gamma+kappa)*xhat(2)*dt;
