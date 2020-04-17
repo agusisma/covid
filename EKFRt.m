@@ -63,7 +63,7 @@ for i=1:((tf-1)/dt)
     % Extended Kalman filter
     % Calculating the Jacobian matrix
     FX    = [1-(gamma+kappa)*xhat(5)*xhat(2)*dt/N -(gamma+kappa)*xhat(5)*xhat(1)*dt/N 0 0 -(gamma+kappa)*xhat(1)*xhat(2)*dt/N;
-             (gamma+kappa)*xhat(5)*xhat(2)*dt/N-(gamma+kappa)*xhat(2)*dt 1+(gamma+kappa)*xhat(5)*xhat(1)*dt/N-(gamma+kappa)*dt 0 0 (gamma+kappa)*xhat(1)*xhat(2)*dt/N;
+             (gamma+kappa)*xhat(5)*xhat(2)*dt/N 1+(gamma+kappa)*xhat(5)*xhat(1)*dt/N-(gamma+kappa)*dt 0 0 (gamma+kappa)*xhat(1)*xhat(2)*dt/N;
              0 gamma*dt 1 0 0;
              0 kappa*dt 0 1 0;
              0 0 0 0 1];
