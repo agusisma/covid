@@ -1,6 +1,6 @@
 %% Research code by Agus Hasan
 % This code is used to estimate the value of daily reproduction number Rt
-% based on Extended Kalman Filter (EKF)
+% based on Extended Kalman Filter (EKF) and low pass filter
 
 clear;
 clc;
@@ -13,7 +13,7 @@ tf  = length(DATA);
 N   = sum(DATA(1,3:end));                    % number of population
 CFR = DATA(end,end)/(sum(DATA(end,4:6)));    % case fatality rate
 td  = datetime(2020,DATA(1,1),DATA(1,2)) + caldays(1:tf);
-Ti  = 14;                                    % infection time
+Ti  = 10;                                    % infection time
 
 dt  = 0.01;
 t   = dt:dt:tf;
@@ -21,21 +21,23 @@ t   = dt:dt:tf;
 %% Data matrix
 
 C = [1 0 0 0 0;
-     0 1 0 0 0;
+     0 1 0 0 0; 
      0 0 1 0 0;
      0 0 0 1 0];
 
-%% Noise
-QF = 1*eye(5);
-RF = [10 0 0 0;0 10 0 0;0 0 5 0; 0 0 0 2];
-
 %% Initialization
-xhat     = [N-1; 1; 0; 0; 1]; % initial condition 14.02
-Pplus    = 1*eye(5);
+xhat     = [N-1; 1; 0; 0; 0]; % initial condition 14.02
+Pplus    = 0*eye(5);
 
 %% Paramater
-gamma = (1-CFR)*(1/Ti);
-kappa = CFR*1/Ti;
+gamma  = (1-CFR)*(1/Ti);
+kappa  = CFR*1/Ti;
+sigma1 = 1.96; %95 CI
+std_R  = 0.2;
+
+%% Noise
+QF = 1*eye(5);
+RF = [100 0 0 0;0 10 0 0;0 0 1 0;0 0 0 std_R];
 
 %% For plotting
 
@@ -65,18 +67,16 @@ for i=1:((tf-1)/dt)
              0 gamma*dt 1 0 0;
              0 kappa*dt 0 1 0;
              0 0 0 0 1];
-
+    y = [interp1(0:1:tf-1,DATA(:,3),t,'makima');
+         interp1(0:1:tf-1,DATA(:,4),t,'makima');
+         interp1(0:1:tf-1,DATA(:,5),t,'makima');
+         interp1(0:1:tf-1,DATA(:,6),t,'makima')];
+    
     Pmin  = FX*Pplus*FX'+QF;
-    
-    % update
-    
+
     KF    = Pmin*C'*inv(C*Pmin*C'+RF);
     
-    y = [interp1(0:1:tf-1,DATA(:,3),t);
-         interp1(0:1:tf-1,DATA(:,4),t);
-         interp1(0:1:tf-1,DATA(:,5),t);
-         interp1(0:1:tf-1,DATA(:,6),t)];
-     
+    % update 
     xhat  = xhat + KF*(y(:,i)-C*xhat);
     Pplus = (eye(5)-KF*C)*Pmin;
 end
@@ -113,38 +113,35 @@ subplot(3,1,1)
 plot(td,[xhatIArray DATA(end,4)],'LineWidth',6)
 hold on
 plot(td,DATA(:,4),'*r','LineWidth',6)
-ylabel('Kasus Aktif')
+ylabel('Active Cases')
 set(gca,'FontSize',24)
+legend('Estimation','Reported Cases')
 grid on
 grid minor
 subplot(3,1,2)
 plot(td,[xhatHArray DATA(end,5)],'LineWidth',6)
 hold on
 plot(td,DATA(:,5),'*r','LineWidth',6)
-ylabel('Sembuh')
+ylabel('Recovered')
 set(gca,'FontSize',24)
-legend('Estimasi','Data Lapangan')
 grid on
 grid minor
 subplot(3,1,3)
 plot(td,[xhatDArray DATA(end,6)],'LineWidth',6)
 hold on
 plot(td,DATA(:,6)','*r','LineWidth',6)
-ylabel('Meninggal')
-xlabel('Tanggal');
+ylabel('Death')
+xlabel('Date');
 set(gca,'FontSize',24)
 grid on
 grid minor
 
-H= [xhatRArray xhatRArray(end)];
-x = 1:numel(H);
-sigma = 1.96; %95 CI
+H       = [xhatRArray xhatRArray(end)];
+curve1  = H + sigma1*std_R;
+curve2  = max(H - sigma1*std_R,0);
+x2      = [td, fliplr(td)];
 
 figure(2)
-std_dev = 0.25;
-curve1 = H + sigma*std_dev;
-curve2 = H - sigma*std_dev;
-x2 = [td, fliplr(td)];
 inBetween = [curve1, fliplr(curve2)];
 fill(x2, inBetween, 'k');
 alpha(0.5)
@@ -152,8 +149,8 @@ hold on;
 plot(td,H,'k','LineWidth',6)
 hold on
 plot(td,ones(1,tf),'r','LineWidth',6)
-title('Estimasi Angka Reproduksi Harian (Rt)')
-xlabel('Tanggal');
+title('Daily Reproduction Number (Rt)')
+xlabel('Date');
 set(gca,'FontSize',24)
 grid on
 grid minor
