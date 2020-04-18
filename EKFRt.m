@@ -136,7 +136,7 @@ set(gca,'FontSize',24)
 grid on
 grid minor
 
-H       = [xhatRArray xhatRArray(end)];
+H       = [xhatRArray xhatR];
 curve1  = H + sigma1*std_R;
 curve2  = max(H - sigma1*std_R,0);
 x2      = [td, fliplr(td)];
