@@ -12,7 +12,7 @@ load DATA.txt; % load data: month | date | suspected | active cases | cummilativ
 tf  = length(DATA);
 N   = sum(DATA(1,3:end));                    % number of population
 CFR = DATA(end,end)/(sum(DATA(end,4:6)));    % case fatality rate
-td  = datetime(2020,DATA(1,1),DATA(1,2)) + caldays(1:tf);
+td  = datetime(2020,DATA(1,1),DATA(1,2)-1) + caldays(1:tf);
 Ti  = 10;                                    % infection time
 
 dt  = 0.01;
