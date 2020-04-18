@@ -13,7 +13,7 @@ tf  = length(DATA);
 N   = sum(DATA(1,3:end));                    % number of population
 CFR = DATA(end,end)/(sum(DATA(end,4:6)));    % case fatality rate
 td  = datetime(2020,DATA(1,1),DATA(1,2)-1) + caldays(1:tf);
-Ti  = 9;                                    % infection time
+Ti  = 9;                                     % infection time
 
 dt  = 0.01;
 t   = dt:dt:tf;
@@ -32,19 +32,19 @@ Pplus    = 0*eye(5);
 %% Paramater
 gamma  = (1-CFR)*(1/Ti);
 kappa  = CFR*1/Ti;
-alpha1 = 1;
+alpha1 = 0.9;
 sigma1 = 1.96; %95 CI
 std_R  = 0.2;
 
 %% Noise
-QF = 1*eye(5);
-RF = [100 0 0 0;0 10 0 0;0 0 1 0;0 0 0 std_R];
+QF = [1 0 0 0 0; 0 1 0 0 0; 0 0 1 0 0; 0 0 0 1 0; 0 0 0 0 std_R];
+RF = [100 0 0 0;0 10 0 0;0 0 10 0;0 0 0 1];
 
 %% For plotting
 
 windowSize = 500; 
-b = (1/windowSize)*ones(1,windowSize);
-a = 1;
+b          = (1/windowSize)*ones(1,windowSize);
+a          = 1;
 
 xArray     = [];
 xhatArray  = [];
@@ -61,6 +61,8 @@ for i=1:((tf-1)/dt)
      xhat(4) = xhat(4)+kappa*xhat(2)*dt;
      xhat(5) = xhat(5);
 
+     xhat = xhat + sqrt(QF)*[randn randn randn randn randn]';
+     
     % Extended Kalman filter
     % Calculating the Jacobian matrix
     FX    = [1-(gamma+kappa)*xhat(5)*xhat(2)*dt/N -(gamma+kappa)*xhat(5)*xhat(1)*dt/N 0 0 -(gamma+kappa)*xhat(1)*xhat(2)*dt/N;
@@ -72,7 +74,9 @@ for i=1:((tf-1)/dt)
          interp1(0:1:tf-1,DATA(:,4),t,'makima');
          interp1(0:1:tf-1,DATA(:,5),t,'makima');
          interp1(0:1:tf-1,DATA(:,6),t,'makima')];
-    
+
+    y = y + sqrt(RF)*[randn randn randn randn]';
+     
     Pmin  = FX*Pplus*FX'+QF;
 
     KF    = Pmin*C'*inv(C*Pmin*C'+RF);
@@ -81,11 +85,14 @@ for i=1:((tf-1)/dt)
     % update 
     xhat  = xhat + KF*(y(:,i)-C*xhat);
     Pplus = (eye(5)-KF*C)*Pmin;
+    
+%    RF    = alpha1*RF + (1-alpha1)*((y(:,i)-C*xhat)*(y(:,i)-C*xhat)'+C*Pmin*C');
+    
 end
 
 %% Plotting
 
-xhatArray(5,:) = filter(b,a,xhatArray(5,:));
+xhatArray(5,:) = max(0,filter(b,a,xhatArray(5,:)));
 
 xhatSArray = [];
 xhatS      = xhatArray(1,tf);
@@ -164,16 +171,15 @@ grid minor
 
 % RMS
 
-% RMSS = sqrt(((xhatSArray)'-DATA(1:end-1,3))'*((xhatSArray)'-DATA(1:end-1,3)))/length(xhatSArray);
-% RMSI = sqrt(((xhatIArray)'-DATA(1:end-1,4))'*((xhatIArray)'-DATA(1:end-1,4)))/length(xhatIArray);
-% RMSR = sqrt(((xhatHArray)'-DATA(1:end-1,5))'*((xhatHArray)'-DATA(1:end-1,5)))/length(xhatHArray);
-% RMSD = sqrt(((xhatDArray)'-DATA(1:end-1,6))'*((xhatDArray)'-DATA(1:end-1,6)))/length(xhatDArray);
-% RMS  = RMSS+RMSI+RMSR+RMSD
+RMSS = 0;
+RMSI = 0;
+RMSH = 0;
+RMSD = 0;
 
 for j = 1:tf
-    RMSS = sqrt(((xhatSArray(j)-DATA(j,3))/DATA(j,3))^2);
-    RMSI = sqrt(((xhatIArray(j)-DATA(j,4))/DATA(j,4))^2);
-    RMSH = sqrt(((xhatHArray(j)-DATA(j,5))/DATA(j,5))^2);
-    RMSD = sqrt(((xhatDArray(j)-DATA(j,6))/DATA(j,6))^2);
-    RMS  = (RMSS+RMSI+RMSH+RMSD)*100                        % Percentage of RMS
+    RMSS = RMSS + sqrt(((xhatSArray(j)-DATA(j,3))/max(1,DATA(j,3)))^2);
+    RMSI = RMSI + sqrt(((xhatIArray(j)-DATA(j,4))/max(1,DATA(j,4)))^2);
+    RMSH = RMSH + sqrt(((xhatHArray(j)-DATA(j,5))/max(1,DATA(j,5)))^2);
+    RMSD = RMSD + sqrt(((xhatDArray(j)-DATA(j,6))/max(1,DATA(j,6)))^2);
 end
+RMS  = (RMSS+RMSI+RMSH+RMSD)
