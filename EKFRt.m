@@ -12,7 +12,7 @@ load DATA.txt; % load data: month | date | suspected | active cases | cummilativ
 tf  = length(DATA);
 N   = sum(DATA(1,3:end));                    % number of population
 CFR = DATA(end,end)/(sum(DATA(end,4:6)));    % case fatality rate
-td  = datetime(2020,DATA(1,1),DATA(1,2)-1) + caldays(1:tf);
+td  = datetime(2020,DATA(1,2),DATA(1,1)-1) + caldays(1:tf);
 Ti  = 9;                                     % infection time
 
 dt  = 0.01;
@@ -32,12 +32,12 @@ Pplus    = 0*eye(5);
 %% Paramater
 gamma  = (1-CFR)*(1/Ti);
 kappa  = CFR*1/Ti;
-alpha1 = 0.9;
+alpha1 = 0.3;
 sigma1 = 1.96; %95 CI
 std_R  = 0.2;
 
 %% Noise
-QF = [1 0 0 0 0; 0 1 0 0 0; 0 0 1 0 0; 0 0 0 1 0; 0 0 0 0 std_R];
+QF = [10 0 0 0 0; 0 10 0 0 0; 0 0 10 0 0; 0 0 0 10 0; 0 0 0 0 std_R];
 RF = [100 0 0 0;0 10 0 0;0 0 10 0;0 0 0 1];
 
 %% For plotting
@@ -61,7 +61,7 @@ for i=1:((tf-1)/dt)
      xhat(4) = xhat(4)+kappa*xhat(2)*dt;
      xhat(5) = xhat(5);
 
-     xhat = xhat + sqrt(QF)*[randn randn randn randn randn]';
+     xhat = xhat + sqrt(QF)*[randn randn randn randn randn]'*dt;
      
     % Extended Kalman filter
     % Calculating the Jacobian matrix
@@ -75,7 +75,7 @@ for i=1:((tf-1)/dt)
          interp1(0:1:tf-1,DATA(:,5),t,'makima');
          interp1(0:1:tf-1,DATA(:,6),t,'makima')];
 
-    y = y + sqrt(RF)*[randn randn randn randn]';
+    y = y + sqrt(RF)*[randn randn randn randn]'*dt;
      
     Pmin  = FX*Pplus*FX'+QF;
 
@@ -182,4 +182,4 @@ for j = 1:tf
     RMSH = RMSH + sqrt(((xhatHArray(j)-DATA(j,5))/max(1,DATA(j,5)))^2);
     RMSD = RMSD + sqrt(((xhatDArray(j)-DATA(j,6))/max(1,DATA(j,6)))^2);
 end
-RMS  = (RMSS+RMSI+RMSH+RMSD)
+RMS  = (RMSS+RMSI+RMSH+RMSD)/tf
