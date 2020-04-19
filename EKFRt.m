@@ -12,7 +12,7 @@ load DATA.txt; % load data: month | date | suspected | active cases | cummilativ
 tf  = length(DATA);
 N   = sum(DATA(1,3:end));                    % number of population
 CFR = DATA(end,end)/(sum(DATA(end,4:6)));    % case fatality rate
-td  = datetime(2020,DATA(1,2),DATA(1,1)-1) + caldays(1:tf);
+td  = datetime(2020,DATA(1,1),DATA(1,2)-1) + caldays(1:tf);
 Ti  = 9;                                     % infection time
 
 dt  = 0.01;
@@ -26,7 +26,7 @@ C = [1 0 0 0 0;
      0 0 0 1 0];
 
 %% Initialization
-xhat     = [N-1; 1; 0; 0; 0]; % initial condition 14.02
+xhat     = [N-1; 1; 0; 0; 0]; % initial condition
 Pplus    = 0*eye(5);
 
 %% Paramater
@@ -37,8 +37,8 @@ sigma1 = 1.96; %95 CI
 std_R  = 0.2;
 
 %% Noise
-QF = [10 0 0 0 0; 0 10 0 0 0; 0 0 10 0 0; 0 0 0 10 0; 0 0 0 0 std_R];
-RF = [100 0 0 0;0 10 0 0;0 0 10 0;0 0 0 1];
+QF = diag([10 10 10 10 std_R]);
+RF = diag([100 10 10 1]);
 
 %% For plotting
 
@@ -87,41 +87,56 @@ for i=1:((tf-1)/dt)
     Pplus = (eye(5)-KF*C)*Pmin;
     
 %    RF    = alpha1*RF + (1-alpha1)*((y(:,i)-C*xhat)*(y(:,i)-C*xhat)'+C*Pmin*C');
-    
+    xhat(5) = max(0,xhat(5)); % the reproduction number cannot be negative
 end
 
 %% Plotting
 
-xhatArray(5,:) = max(0,filter(b,a,xhatArray(5,:)));
+xhatArray(5,:) = filter(b,a,xhatArray(5,:));
 
-xhatSArray = [];
-xhatS      = xhatArray(1,tf);
-xhatIArray = [];
-xhatI      = xhatArray(2,tf);
-xhatHArray = [];
-xhatH      = xhatArray(3,tf);
-xhatDArray = [];
-xhatD      = xhatArray(4,tf);
-xhatRArray = [];
-xhatR      = xhatArray(5,tf);
+xhatSArray  = [];
+xhatS       = xhatArray(1,tf);
+xhatIArray  = [];
+xhatI       = xhatArray(2,tf);
+xhatRArray  = [];
+xhatR       = xhatArray(3,tf);
+xhatDArray  = [];
+xhatD       = xhatArray(4,tf);
+xhatRtArray = [];
+xhatRt      = xhatArray(5,tf);
 for i=1:tf-1
-    xhatSArray = [xhatSArray xhatS];
-    xhatS      = xhatArray(1,100*i);
-    xhatIArray = [xhatIArray xhatI];
-    xhatI      = xhatArray(2,100*i);
-    xhatHArray = [xhatHArray xhatH];
-    xhatH      = xhatArray(3,100*i);
-    xhatDArray = [xhatDArray xhatD];
-    xhatD      = xhatArray(4,100*i);
-    xhatRArray = [xhatRArray xhatR];
-    xhatR      = xhatArray(5,100*i);
+    xhatSArray  = [xhatSArray xhatS];
+    xhatS       = xhatArray(1,100*i);
+    xhatIArray  = [xhatIArray xhatI];
+    xhatI       = xhatArray(2,100*i);
+    xhatRArray  = [xhatRArray xhatR];
+    xhatR       = xhatArray(3,100*i);
+    xhatDArray  = [xhatDArray xhatD];
+    xhatD       = xhatArray(4,100*i);
+    xhatRtArray = [xhatRtArray xhatRt];
+    xhatRt      = xhatArray(5,100*i);
 end
 
-xhatSArray = [xhatSArray xhatS];
-xhatIArray = [xhatIArray xhatI];
-xhatHArray = [xhatHArray xhatH];
-xhatDArray = [xhatDArray xhatD];
-xhatRArray = [xhatRArray xhatR];
+xhatSArray  = [xhatSArray xhatS];
+xhatIArray  = [xhatIArray xhatI];
+xhatRArray  = [xhatRArray xhatR];
+xhatDArray  = [xhatDArray xhatD];
+xhatRtArray = [xhatRtArray xhatRt];
+
+% RMS
+
+RMSS = 0;
+RMSI = 0;
+RMSH = 0;
+RMSD = 0;
+
+for j = 1:tf
+    RMSS = RMSS + sqrt(((xhatSArray(j)-DATA(j,3))/max(1,DATA(j,3)))^2);
+    RMSI = RMSI + sqrt(((xhatIArray(j)-DATA(j,4))/max(1,DATA(j,4)))^2);
+    RMSH = RMSH + sqrt(((xhatRArray(j)-DATA(j,5))/max(1,DATA(j,5)))^2);
+    RMSD = RMSD + sqrt(((xhatDArray(j)-DATA(j,6))/max(1,DATA(j,6)))^2);
+end
+RMS  = (RMSS+RMSI+RMSH+RMSD)/tf
 
 figure(1)
 subplot(3,1,1)
@@ -134,7 +149,7 @@ legend('Estimation','Reported Cases')
 grid on
 grid minor
 subplot(3,1,2)
-plot(td,xhatHArray,'LineWidth',6)
+plot(td,xhatRArray,'LineWidth',6)
 hold on
 plot(td,DATA(:,5),'*r','LineWidth',6)
 ylabel('Recovered')
@@ -151,8 +166,8 @@ set(gca,'FontSize',24)
 grid on
 grid minor
 
-curve1  = xhatRArray + sigma1*std_R;
-curve2  = max(xhatRArray - sigma1*std_R,0);
+curve1  = xhatRtArray + sigma1*std_R;
+curve2  = max(xhatRtArray - sigma1*std_R,0);
 x2      = [td, fliplr(td)];
 
 figure(2)
@@ -160,7 +175,7 @@ inBetween = [curve1, fliplr(curve2)];
 fill(x2, inBetween, 'k');
 alpha(0.5)
 hold on;
-plot(td,xhatRArray,'k','LineWidth',6)
+plot(td,xhatRtArray,'k','LineWidth',6)
 hold on
 plot(td,ones(1,tf),'r','LineWidth',6)
 title('Daily Reproduction Number (Rt)')
@@ -168,18 +183,3 @@ xlabel('Date');
 set(gca,'FontSize',24)
 grid on
 grid minor
-
-% RMS
-
-RMSS = 0;
-RMSI = 0;
-RMSH = 0;
-RMSD = 0;
-
-for j = 1:tf
-    RMSS = RMSS + sqrt(((xhatSArray(j)-DATA(j,3))/max(1,DATA(j,3)))^2);
-    RMSI = RMSI + sqrt(((xhatIArray(j)-DATA(j,4))/max(1,DATA(j,4)))^2);
-    RMSH = RMSH + sqrt(((xhatHArray(j)-DATA(j,5))/max(1,DATA(j,5)))^2);
-    RMSD = RMSD + sqrt(((xhatDArray(j)-DATA(j,6))/max(1,DATA(j,6)))^2);
-end
-RMS  = (RMSS+RMSI+RMSH+RMSD)/tf
