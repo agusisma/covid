@@ -6,9 +6,7 @@ clear;
 clc;
 
 %%
-load US.txt; % load data: month | date | suspected | active cases | cummilative recovered | cummulative death
-
-DATA = US;
+load DATA.txt; % load data: month | date | suspected | active cases | cummilative recovered | cummulative death
 
 %% Simulation
 for j = 1:3
