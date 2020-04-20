@@ -6,13 +6,15 @@ clear;
 clc;
 
 %%
-load DATA.txt; % load data: month | date | suspected | active cases | cummilative recovered | cummulative death
+load ID.txt; % load data: month | date | suspected | active cases | cummilative recovered | cummulative death
+
+DATA = ID;
 
 %%
 tf  = length(DATA);
 N   = sum(DATA(1,3:end));                    % number of population
 CFR = DATA(end,end)/(sum(DATA(end,4:6)));    % case fatality rate
-td  = datetime(2020,DATA(1,1),DATA(1,2)-1) + caldays(1:tf);
+td  = datetime(2020,DATA(1,2),DATA(1,1)-1) + caldays(1:tf);
 Ti  = 9;                                     % infection time
 
 dt  = 0.01;
@@ -168,6 +170,8 @@ grid minor
 
 curve1  = xhatRtArray + sigma1*std_R;
 curve2  = max(xhatRtArray - sigma1*std_R,0);
+curve11 = 0*ones(1,tf);
+curve22 = 1*ones(1,tf);
 x2      = [td, fliplr(td)];
 
 figure(2)
@@ -177,9 +181,16 @@ alpha(0.5)
 hold on;
 plot(td,xhatRtArray,'k','LineWidth',6)
 hold on
+inBetween = [curve11, fliplr(curve22)];
+fill(x2, inBetween, 'g');
+alpha(0.1)
+hold on;
 plot(td,ones(1,tf),'r','LineWidth',6)
 title('Daily Reproduction Number (Rt)')
 xlabel('Date');
 set(gca,'FontSize',24)
+ylim([0 6])
+xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))])
+legend('Confidence Interval 95%')
 grid on
 grid minor
