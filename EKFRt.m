@@ -147,7 +147,7 @@ hold on
 plot(td,DATA(:,4),'*r','LineWidth',6)
 ylabel('Active Cases')
 set(gca,'FontSize',24)
-legend('Estimation','Reported Cases')
+legend('Estimated Cases','Reported Cases')
 grid on
 grid minor
 subplot(3,1,2)
