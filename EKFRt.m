@@ -6,16 +6,20 @@ clear;
 clc;
 
 %%
-load ID.txt; % load data: month | date | suspected | active cases | cummilative recovered | cummulative death
+load US.txt; % load data: month | date | suspected | active cases | cummilative recovered | cummulative death
 
-DATA = ID;
+DATA = US;
+
+%% Simulation
+for j = 1:3
+% Infection time
+Ti  = 9-1.96+(j-1)*1.96;                     % infection time with CI 95%
 
 %%
 tf  = length(DATA);
 N   = sum(DATA(1,3:end));                    % number of population
 CFR = DATA(end,end)/(sum(DATA(end,4:6)));    % case fatality rate
 td  = datetime(2020,DATA(1,2),DATA(1,1)-1) + caldays(1:tf);
-Ti  = 9;                                     % infection time
 
 dt  = 0.01;
 t   = dt:dt:tf;
@@ -43,15 +47,18 @@ QF = diag([10 10 10 10 std_R]);
 RF = diag([100 10 10 1]);
 
 %% For plotting
-
+% Low pass filter
 windowSize = 500; 
 b          = (1/windowSize)*ones(1,windowSize);
 a          = 1;
+% For figure 2
+curve11 = 0*ones(1,tf);
+curve22 = 1*ones(1,tf);
+x2      = [td, fliplr(td)];
 
 xArray     = [];
 xhatArray  = [];
-
-%% Simulation
+    
 for i=1:((tf-1)/dt)
      xhatArray = [xhatArray xhat]; 
      
@@ -125,21 +132,15 @@ xhatRArray  = [xhatRArray xhatR];
 xhatDArray  = [xhatDArray xhatD];
 xhatRtArray = [xhatRtArray xhatRt];
 
-% RMS
+M(j,:) = xhatRtArray;
 
-RMSS = 0;
-RMSI = 0;
-RMSH = 0;
-RMSD = 0;
-
-for j = 1:tf
-    RMSS = RMSS + sqrt(((xhatSArray(j)-DATA(j,3))/max(1,DATA(j,3)))^2);
-    RMSI = RMSI + sqrt(((xhatIArray(j)-DATA(j,4))/max(1,DATA(j,4)))^2);
-    RMSH = RMSH + sqrt(((xhatRArray(j)-DATA(j,5))/max(1,DATA(j,5)))^2);
-    RMSD = RMSD + sqrt(((xhatDArray(j)-DATA(j,6))/max(1,DATA(j,6)))^2);
 end
-RMS  = (RMSS+RMSI+RMSH+RMSD)/tf
 
+curve1      = M(1,:);
+xhatRtArray = M(2,:);
+curve2      = M(3,:);
+
+%% Plotting
 figure(1)
 subplot(3,1,1)
 plot(td,xhatIArray,'LineWidth',6)
@@ -165,17 +166,10 @@ plot(td,xhatDArray,'LineWidth',6)
 hold on
 plot(td,DATA(:,6)','*r','LineWidth',6)
 ylabel('Death')
-xlabel('Date');
 set(gca,'FontSize',24)
 xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))])
 grid on
 grid minor
-
-curve1  = xhatRtArray + sigma1*std_R;
-curve2  = max(xhatRtArray - sigma1*std_R,0);
-curve11 = 0*ones(1,tf);
-curve22 = 1*ones(1,tf);
-x2      = [td, fliplr(td)];
 
 figure(2)
 inBetween = [curve1, fliplr(curve2)];
@@ -189,11 +183,24 @@ fill(x2, inBetween, 'g');
 alpha(0.1)
 hold on;
 plot(td,ones(1,tf),'r','LineWidth',6)
-title('Denmark COVID-19 Daily Reproduction Number (Rt)')
-xlabel('Date');
-set(gca,'FontSize',24)
+set(gca,'FontSize',48)
 ylim([0 6])
 xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))])
 legend('Confidence Interval 95%')
 grid on
 grid minor
+
+% RMS
+
+RMSS = 0;
+RMSI = 0;
+RMSH = 0;
+RMSD = 0;
+
+for j = 1:tf
+    RMSS = RMSS + sqrt(((xhatSArray(j)-DATA(j,3))/max(1,DATA(j,3)))^2);
+    RMSI = RMSI + sqrt(((xhatIArray(j)-DATA(j,4))/max(1,DATA(j,4)))^2);
+    RMSH = RMSH + sqrt(((xhatRArray(j)-DATA(j,5))/max(1,DATA(j,5)))^2);
+    RMSD = RMSD + sqrt(((xhatDArray(j)-DATA(j,6))/max(1,DATA(j,6)))^2);
+end
+RMS  = (RMSS+RMSI+RMSH+RMSD)/tf
