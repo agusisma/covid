@@ -147,7 +147,8 @@ hold on
 plot(td,DATA(:,4),'*r','LineWidth',6)
 ylabel('Active Cases')
 set(gca,'FontSize',24)
-legend('Estimated Cases','Reported Cases')
+legend('Estimated Cases','Reported Cases','Location','northwest')
+xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))])
 grid on
 grid minor
 subplot(3,1,2)
@@ -156,6 +157,7 @@ hold on
 plot(td,DATA(:,5),'*r','LineWidth',6)
 ylabel('Recovered')
 set(gca,'FontSize',24)
+xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))])
 grid on
 grid minor
 subplot(3,1,3)
@@ -165,6 +167,7 @@ plot(td,DATA(:,6)','*r','LineWidth',6)
 ylabel('Death')
 xlabel('Date');
 set(gca,'FontSize',24)
+xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))])
 grid on
 grid minor
 
@@ -186,7 +189,7 @@ fill(x2, inBetween, 'g');
 alpha(0.1)
 hold on;
 plot(td,ones(1,tf),'r','LineWidth',6)
-title('Daily Reproduction Number (Rt)')
+title('Denmark COVID-19 Daily Reproduction Number (Rt)')
 xlabel('Date');
 set(gca,'FontSize',24)
 ylim([0 6])
