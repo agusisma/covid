@@ -1,4 +1,4 @@
-% month | date | suspected | active cases | cummulative recovered | cummulative death
+% date | month | susceptible | active cases | cummulative recovered | cummulative death
    15     2 273523615     0     0     0
    16     2 273523615     0     0     0
    17     2 273523615     0     0     0
