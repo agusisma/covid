@@ -4,7 +4,7 @@ clear;
 clc;
 
 %%
-load JKT.txt; % load data: month | date | suspected | active cases | cummilative recovered | cummulative death
+load JKT.txt; % load data: date | month | susceptible | active cases | cummilative recovered | cummulative death
     
 DATA = JKT;
 
