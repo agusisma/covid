@@ -310,7 +310,7 @@ XRT = [1-(xhatRt/R0) xhatRt(end)/R0];
 explode=[1 0];
 h = pie(XRT,explode);
 set(findobj(h,'type','text'),'fontsize',24)
-title('Current Physical Distancing Index (PDI)')
+title('Current Contact Index (CI)')
 set(gca,'FontSize',24)
 
 subplot(2,2,4)
@@ -325,11 +325,10 @@ hold on;
 plot(tdp,xIpredic(1,:),':r','LineWidth',6)
 set(gca,'color','none','FontSize',24)
 xline(datetime(2020,DATA(end,2),DATA(end,1)),'b','LineWidth',6)
-text(tf-20,0.3*DATA(end,4),'\leftarrow Past','FontSize',24)
-text(tf,0.3*DATA(end,4),'Future \rightarrow','FontSize',24)
-legend_str = {'PDI = 5%','PDI = 10%','PDI = 15%','PDI = 20%','PDI = 25%','Present'};
+text(tf-25,0.3*DATA(end,4),'\leftarrow Past','FontSize',24)
+text(tf+2,0.3*DATA(end,4),'Future \rightarrow','FontSize',24)
+legend_str = {'CI = 25%','CI = 20%','CI = 15%','CI = 10%','CI = 5%','Present'};
 legend(legend_str(1:5),'Location','northwest')
-
 ylim([0 2*DATA(end,4)])
 title('30-Day Forecast')
 grid on
