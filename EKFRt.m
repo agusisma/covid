@@ -6,12 +6,11 @@ clear;
 clc;
 
 %%
-load DATA.txt; % load data: date | month | susceptible | active cases | cummilative recovered | cummulative death
+load DK.txt; % load data: date | month | susceptible | active cases | cummilative recovered | cummulative death
 
-%% Simulation
-for j = 1:3
-% Infection time
-Ti  = 9-1.96+(j-1)*1.96;                     % infection time with CI 95%
+DATA = DK;
+%% Infectious time
+Tinf = 9;
 
 %%
 tf  = length(DATA);
@@ -23,25 +22,15 @@ dt  = 0.01;
 t   = dt:dt:tf;
 
 %% Data matrix
-
 C = [1 0 0 0 0;
      0 1 0 0 0; 
      0 0 1 0 0;
      0 0 0 1 0];
-
-%% Initialization
-xhat     = [N-1; 1; 0; 0; 0]; % initial condition
-Pplus    = 0*eye(5);
-
-%% Paramater
-gamma  = (1-CFR)*(1/Ti);
-kappa  = CFR*1/Ti;
-alpha1 = 0.3;
-sigma1 = 1.96; %95 CI
-std_R  = 0.2;
+%% Parameters
+sigma  = 1.96; %95 CI
 
 %% Noise
-QF = diag([10 10 10 10 std_R]);
+QF = diag([10 10 10 10 0.2]);
 RF = diag([100 10 10 1]);
 
 %% For plotting
@@ -53,6 +42,18 @@ a          = 1;
 curve11 = 0*ones(1,tf);
 curve22 = 1*ones(1,tf);
 x2      = [td, fliplr(td)];
+
+%% Simulation
+for j = 1:3
+% Infection time
+Ti  = Tinf-sigma+(j-1)*sigma;                     % infection time with CI 95%
+
+gamma  = (1-CFR)*(1/Ti);
+kappa  = CFR*1/Ti;
+
+%% Initialization
+xhat     = [N-1; 1; 0; 0; 0]; % initial condition
+Pplus    = 0*eye(5);
 
 xArray     = [];
 xhatArray  = [];
@@ -68,9 +69,6 @@ for i=1:((tf-1)/dt)
      xhat(4) = xhat(4)+kappa*xhat(2)*dt;
      xhat(5) = xhat(5);
 
-     xhat = xhat + sqrt(QF)*[randn randn randn randn randn]'*dt;
-     
-    % Extended Kalman filter
     % Calculating the Jacobian matrix
     FX    = [1-(gamma+kappa)*xhat(5)*xhat(2)*dt/N -(gamma+kappa)*xhat(5)*xhat(1)*dt/N 0 0 -(gamma+kappa)*xhat(1)*xhat(2)*dt/N;
              (gamma+kappa)*xhat(5)*xhat(2)*dt/N 1+(gamma+kappa)*xhat(5)*xhat(1)*dt/N-(gamma+kappa)*dt 0 0 (gamma+kappa)*xhat(1)*xhat(2)*dt/N;
@@ -81,19 +79,14 @@ for i=1:((tf-1)/dt)
          interp1(0:1:tf-1,DATA(:,4),t,'makima');
          interp1(0:1:tf-1,DATA(:,5),t,'makima');
          interp1(0:1:tf-1,DATA(:,6),t,'makima')];
-
-    y = y + sqrt(RF)*[randn randn randn randn]'*dt;
      
     Pmin  = FX*Pplus*FX'+QF;
 
-    KF    = Pmin*C'*inv(C*Pmin*C'+RF);
-%    QF    = alpha1*QF + (1-alpha1)*(KF*(y(:,i)-C*xhat)*(y(:,i)-C*xhat)'*KF');    
-
     % update 
+    KF    = Pmin*C'*inv(C*Pmin*C'+RF);
     xhat  = xhat + KF*(y(:,i)-C*xhat);
     Pplus = (eye(5)-KF*C)*Pmin;
     
-%    RF    = alpha1*RF + (1-alpha1)*((y(:,i)-C*xhat)*(y(:,i)-C*xhat)'+C*Pmin*C');
     xhat(5) = max(0,xhat(5)); % the reproduction number cannot be negative
 end
 
