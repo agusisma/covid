@@ -6,9 +6,8 @@ clear;
 clc;
 
 %% load data
-load DK.txt; % load data: date | month | susceptible | active cases | cummilative recovered | cummulative death
+load DATA.txt; % load data: date | month | susceptible | active cases | cummilative recovered | cummulative death
 
-DATA = DK;
 %% Infectious time
 Tinf = 9;
 
