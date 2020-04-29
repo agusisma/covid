@@ -5,7 +5,7 @@
 clear;
 clc;
 
-%%
+%% load data
 load DK.txt; % load data: date | month | susceptible | active cases | cummilative recovered | cummulative death
 
 DATA = DK;
@@ -46,21 +46,22 @@ x2      = [td, fliplr(td)];
 %% Simulation
 for j = 1:3
 % Infection time
-Ti  = Tinf-sigma+(j-1)*sigma;                     % infection time with CI 95%
-
+Ti     = Tinf-sigma+(j-1)*sigma;                     % infection time with CI 95%
 gamma  = (1-CFR)*(1/Ti);
 kappa  = CFR*1/Ti;
 
 %% Initialization
 xhat     = [N-1; 1; 0; 0; 0]; % initial condition
 Pplus    = 0*eye(5);
+xhatEff  = 0;
 
-xArray     = [];
-xhatArray  = [];
+xArray       = [];
+xhatArray    = [];
+xhatEffArray = [];
     
 for i=1:((tf-1)/dt)
-     xhatArray = [xhatArray xhat]; 
-     
+     xhatArray    = [xhatArray xhat]; 
+     xhatEffArray = [xhatEffArray xhatEff];      
      % prediction
      
      xhat(1) = xhat(1)-(gamma+kappa)*xhat(5)*xhat(1)*xhat(2)*dt/N;
@@ -88,11 +89,12 @@ for i=1:((tf-1)/dt)
     Pplus = (eye(5)-KF*C)*Pmin;
     
     xhat(5) = max(0,xhat(5)); % the reproduction number cannot be negative
+    xhatEff = (xhat(1)/N)*xhat(5);
 end
 
 %% Plotting
 
-xhatArray(5,:) = filter(b,a,xhatArray(5,:));
+xhatArray(5,:) = filter(b,a,xhatEffArray);
 
 xhatSArray  = [];
 xhatS       = xhatArray(1,tf);
