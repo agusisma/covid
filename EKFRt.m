@@ -61,34 +61,30 @@ xhatEffArray = [];
 for i=1:((tf-1)/dt)
      xhatArray    = [xhatArray xhat]; 
      xhatEffArray = [xhatEffArray xhatEff];      
-     % prediction
-     
+     % adding reported data
+     y = [interp1(0:1:tf-1,DATA(:,3),t,'makima');
+         interp1(0:1:tf-1,DATA(:,4),t,'makima');
+         interp1(0:1:tf-1,DATA(:,5),t,'makima');
+         interp1(0:1:tf-1,DATA(:,6),t,'makima')];
+     % predict
      xhat(1) = xhat(1)-(gamma+kappa)*xhat(5)*xhat(1)*xhat(2)*dt/N;
      xhat(2) = xhat(2)+(gamma+kappa)*xhat(5)*xhat(1)*xhat(2)*dt/N-(gamma+kappa)*xhat(2)*dt;
      xhat(3) = xhat(3)+gamma*xhat(2)*dt;
      xhat(4) = xhat(4)+kappa*xhat(2)*dt;
      xhat(5) = xhat(5);
-
-    % Calculating the Jacobian matrix
+    % calculating the Jacobian matrix
     FX    = [1-(gamma+kappa)*xhat(5)*xhat(2)*dt/N -(gamma+kappa)*xhat(5)*xhat(1)*dt/N 0 0 -(gamma+kappa)*xhat(1)*xhat(2)*dt/N;
              (gamma+kappa)*xhat(5)*xhat(2)*dt/N 1+(gamma+kappa)*xhat(5)*xhat(1)*dt/N-(gamma+kappa)*dt 0 0 (gamma+kappa)*xhat(1)*xhat(2)*dt/N;
              0 gamma*dt 1 0 0;
              0 kappa*dt 0 1 0;
-             0 0 0 0 1];
-    y = [interp1(0:1:tf-1,DATA(:,3),t,'makima');
-         interp1(0:1:tf-1,DATA(:,4),t,'makima');
-         interp1(0:1:tf-1,DATA(:,5),t,'makima');
-         interp1(0:1:tf-1,DATA(:,6),t,'makima')];
-     
+             0 0 0 0 1];     
     Pmin  = FX*Pplus*FX'+QF;
-
     % update 
     KF    = Pmin*C'*inv(C*Pmin*C'+RF);
     xhat  = xhat + KF*(y(:,i)-C*xhat);
     Pplus = (eye(5)-KF*C)*Pmin;
-    
     xhat(5) = max(0,xhat(5)); % the reproduction number cannot be negative
-    xhatEff = (xhat(1)/N)*xhat(5);
+    xhatEff = (xhat(1)/N)*xhat(5); % calculating the effective repsoduction number
 end
 
 %% Plotting
