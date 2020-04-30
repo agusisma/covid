@@ -1,17 +1,26 @@
 %% Research code by Agus Hasan
-% This code is used to estimate the value of daily reproduction number Rt
-% based on Extended Kalman Filter (EKF) and low pass filter
+
+% Disclaimer: the analysis and results are strictly only for educational
+% and research purposes and may contain errors.
+
+% The discrete-time augmented SIRD model is used to calculate Rt. In this
+% case, Rt is considered as the fifth state.
+
+% The effective (real-time) reproduction number (Rt) is calculated based on
+% extended Kalman filter. I added a low-pass filter to reduce short term
+% data fluctuation.
+
+% The contact index (CI) is calculated as Rt/Rmax
 
 clear;
 clc;
 
 %% load data
-load IT.txt; % load data: date | month | susceptible | active cases | cummilative recovered | cummulative death
+load DATA.txt; % load data: date | month | susceptible | active cases | cummilative recovered | cummulative death
 
-DATA = IT;
 %% Infectious time
-Tinf = 9;
-
+Tinf = 9;           % COVID-19 infectious time is 9 days with standard deviation of 1 day
+                    % source: https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30196-1/fulltext
 %%
 tp  = 30;                                    % prediction time
 tf  = length(DATA);                          % simulation time
@@ -23,23 +32,23 @@ dt  = 0.01;
 t   = dt:dt:tf;
 
 %% Data matrix
-C = [1 0 0 0 0;
-     0 1 0 0 0; 
+C = [1 0 0 0 0;     % We have data of S, I, R, and D. The fifth state,
+     0 1 0 0 0;     % which is Rt, is estimated.
      0 0 1 0 0;
      0 0 0 1 0];
 %% Parameters
-sigma  = 1.96; %95 CI
+sigma  = 1.96; %95 Confident Interval for infectious time
 
 %% Noise
-QF = diag([10 10 10 10 0.2]);
-RF = diag([100 10 10 1]);
+QF = diag([10 10 10 10 0.2]);   % process and measurement covariance matrices
+RF = diag([100 10 10 1]);       % are considered as tuning parameters
 
 %% For plotting
-% Low pass filter
+% Adding a low pass-filter to handle short-term data fluctuations 
 windowSize = 500; 
 b          = (1/windowSize)*ones(1,windowSize);
 a          = 1;
-% For figure 2
+% Plotting Rt below 1
 curve11 = 0*ones(1,tf);
 curve22 = 1*ones(1,tf);
 x2      = [td, fliplr(td)];
@@ -47,28 +56,28 @@ x2      = [td, fliplr(td)];
 %% Simulation
 for j = 1:3
 % Infection time
-Ti     = Tinf-sigma+(j-1)*sigma;                     % infection time with CI 95%
-gamma  = (1-CFR)*(1/Ti);
-kappa  = CFR*1/Ti;
+Ti     = Tinf-sigma+(j-1)*sigma;    % infection time with standard dev. 1 day
+gamma  = (1-CFR)*(1/Ti);            % recovery rate
+kappa  = CFR*1/Ti;                  % death rate
 
 %% Initialization
-xhat     = [N-1; 1; 0; 0; 0]; % initial condition
-Pplus    = 0*eye(5);
+xhat     = [N-1; 1; 0; 0; 0];   % initial condition
+Pplus    = 0*eye(5);            % since we know excatly the initial conditions
 xhatEff  = 0;
-
+% for plotting
 xArray       = [];
 xhatArray    = [];
 xhatEffArray = [];
-    
+% extended Kalman filter
 for i=1:((tf-1)/dt)
      xhatArray    = [xhatArray xhat]; 
      xhatEffArray = [xhatEffArray xhatEff];      
-     % adding reported data
+     % assimilating the reported data
      y = [interp1(0:1:tf-1,DATA(:,3),t,'makima');
          interp1(0:1:tf-1,DATA(:,4),t,'makima');
          interp1(0:1:tf-1,DATA(:,5),t,'makima');
          interp1(0:1:tf-1,DATA(:,6),t,'makima')];
-     % predict
+     % prediction
      xhat(1) = xhat(1)-(gamma+kappa)*xhat(5)*xhat(1)*xhat(2)*dt/N;
      xhat(2) = xhat(2)+(gamma+kappa)*xhat(5)*xhat(1)*xhat(2)*dt/N-(gamma+kappa)*xhat(2)*dt;
      xhat(3) = xhat(3)+gamma*xhat(2)*dt;
@@ -82,11 +91,11 @@ for i=1:((tf-1)/dt)
              0 0 0 0 1];     
     Pmin  = FX*Pplus*FX'+QF;
     % update 
-    KF    = Pmin*C'*inv(C*Pmin*C'+RF);
+    KF    = Pmin*C'*inv(C*Pmin*C'+RF);  % Kalman gain
     xhat  = xhat + KF*(y(:,i)-C*xhat);
     Pplus = (eye(5)-KF*C)*Pmin;
-    xhat(5) = max(0,xhat(5)); % the reproduction number cannot be negative
-    xhatEff = (xhat(1)/N)*xhat(5); % calculating the effective repsoduction number
+    xhat(5) = max(0,xhat(5));           % the reproduction number cannot be negative
+    xhatEff = (xhat(1)/N)*xhat(5);      % calculating the effective repsoduction number
 end
 
 %% Plotting
@@ -131,7 +140,6 @@ xhatRtArray = M(2,:);
 curve2      = M(3,:);
 
 % RMS
-
 RMSS = 0;
 RMSI = 0;
 RMSH = 0;
@@ -143,9 +151,9 @@ for j = 1:tf
     RMSH = RMSH + sqrt(((xhatRArray(j)-DATA(j,5))/max(1,DATA(j,5)))^2);
     RMSD = RMSD + sqrt(((xhatDArray(j)-DATA(j,6))/max(1,DATA(j,6)))^2);
 end
-RMS  = (RMSS+RMSI+RMSH+RMSD)/tf
+RMS  = (RMSS+RMSI+RMSH+RMSD)/tf;
 
-%% Prediction
+%% Forecasting
 
 mRt  = mean(xhatRtArray(end-20:end));
 R0   = max(xhatRtArray);
@@ -204,7 +212,7 @@ xIpredic(m,:) = [xhatIArray xpIArray];
 
 end
 
-% Plotting
+%% Plotting
 figure(1)
 subplot(3,1,1)
 plot(td,xhatIArray,'LineWidth',6)
