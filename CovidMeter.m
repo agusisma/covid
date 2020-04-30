@@ -267,9 +267,10 @@ grid minor
 figure(3)
 XRT = [1-(xhatRt/R0) xhatRt(end)/R0];
 explode=[1 0];
-h = pie(XRT,explode);
+labels = {'',['Current CI = ' num2str(round((xhatRt(end)/R0)*100)) '%']};
+h = pie(XRT,explode,labels);
 set(findobj(h,'type','text'),'fontsize',48)
-title('Current Contact Index (CI)')
+title('Contact Index (CI)')
 set(gca,'FontSize',48)
 
 figure(4)
@@ -327,9 +328,10 @@ grid minor
 subplot(2,2,3)
 XRT = [1-(xhatRt/R0) xhatRt(end)/R0];
 explode=[1 0];
-h = pie(XRT,explode);
+labels = {'',['Current CI = ' num2str(round((xhatRt(end)/R0)*100)) '%']};
+h = pie(XRT,explode,labels);
 set(findobj(h,'type','text'),'fontsize',24)
-title('Current Contact Index (CI)')
+title('Contact Index (CI)')
 set(gca,'FontSize',24)
 
 subplot(2,2,4)
