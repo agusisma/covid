@@ -146,9 +146,17 @@ end
 RMS  = (RMSS+RMSI+RMSH+RMSD)/tf
 
 %% Prediction
-cont = 0.05;
+
 mRt  = mean(xhatRtArray(end-20:end));
 R0   = max(xhatRtArray);
+
+if xhatRt/R0 < 0.25
+    cont = 0.05;
+elseif xhatRt/R0 > 0.25 && xhatRt/R0 < 0.5
+    cont = 0.1;
+else
+    cont = 0.2;
+end
 
 for m = 1:5
 
@@ -229,25 +237,34 @@ grid minor
 
 figure(2)
 inBetween = [curve1, fliplr(curve2)];
-fill(x2, inBetween, 'k');
+fill(x2, inBetween, 'c');
 alpha(0.5)
 hold on;
-plot(td,xhatRtArray,'k','LineWidth',6)
+plot(td,xhatRtArray,'m','LineWidth',6)
 hold on
 inBetween = [curve11, fliplr(curve22)];
 fill(x2, inBetween, 'g');
 alpha(0.1)
 hold on;
-plot(td,ones(1,tf),'r','LineWidth',6)
-set(gca,'FontSize',48)
+plot(td,ones(1,tf),'g','LineWidth',6)
+set(gca,'color','none','FontSize',48)
+text(tf-30,4,['Current Rt = ',num2str(xhatRtArray(end))],'FontSize',48)
 ylim([0 6])
 xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))])
 legend('Confidence Interval 95%')
-title('Rt')
+title('Real-Time Reproduction Number (Rt)')
 grid on
 grid minor
 
 figure(3)
+XRT = [1-(xhatRt/R0) xhatRt(end)/R0];
+explode=[1 0];
+h = pie(XRT,explode);
+set(findobj(h,'type','text'),'fontsize',48)
+title('Current Contact Index (CI)')
+set(gca,'FontSize',48)
+
+figure(4)
 plot(tdp,xIpredic(5,:),':c','LineWidth',6)
 hold on;
 plot(tdp,xIpredic(4,:),':g','LineWidth',6)
@@ -257,23 +274,16 @@ hold on;
 plot(tdp,xIpredic(2,:),':b','LineWidth',6)
 hold on;
 plot(tdp,xIpredic(1,:),':r','LineWidth',6)
-hold on;
-set(gca,'FontSize',48)
+set(gca,'color','none','FontSize',48)
 xline(datetime(2020,DATA(end,2),DATA(end,1)),'b','LineWidth',6)
-text(tf-20,0.3*DATA(end,4),'\leftarrow Past','FontSize',48)
-text(tf,0.3*DATA(end,4),'Future \rightarrow','FontSize',48)
+text(tf-22,0.3*DATA(end,4),'\leftarrow Past','FontSize',48)
+text(tf+2,0.3*DATA(end,4),'Future \rightarrow','FontSize',48)
+legend_str = {'CI = 25%','CI = 20%','CI = 15%','CI = 10%','CI = 5%','Present'};
+legend(legend_str(1:5),'Location','northwest')
 ylim([0 2*DATA(end,4)])
-title('Projection')
+title('30-Day Forecast')
 grid on
 grid minor
-
-figure(4)
-XRT = [1-(xhatRt/R0) xhatRt(end)/R0];
-explode=[1 0];
-h = pie(XRT,explode);
-set(findobj(h,'type','text'),'fontsize',48)
-title('Current PD Index')
-set(gca,'FontSize',48)
 
 figure(5)
 subplot(2,2,1)
@@ -287,21 +297,22 @@ grid minor
 
 subplot(2,2,2)
 inBetween = [curve1, fliplr(curve2)];
-fill(x2, inBetween, 'k');
+fill(x2, inBetween, 'c');
 alpha(0.5)
 hold on;
-plot(td,xhatRtArray,'k','LineWidth',6)
+plot(td,xhatRtArray,'m','LineWidth',6)
 hold on
 inBetween = [curve11, fliplr(curve22)];
 fill(x2, inBetween, 'g');
 alpha(0.1)
 hold on;
-plot(td,ones(1,tf),'r','LineWidth',6)
+plot(td,ones(1,tf),'g','LineWidth',6)
 set(gca,'color','none','FontSize',24)
+text(tf-35,4,['Current Rt = ',num2str(xhatRtArray(end))],'FontSize',24)
 ylim([0 6])
 xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))])
 legend('Confidence Interval 95%')
-title('Real-Time Reproduction Number')
+title('Real-Time Reproduction Number (Rt)')
 grid on
 grid minor
 
