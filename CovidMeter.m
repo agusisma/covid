@@ -155,16 +155,10 @@ RMS  = (RMSS+RMSI+RMSH+RMSD)/tf;
 
 %% Forecasting
 
-mRt  = mean(xhatRtArray(end-20:end));
+mRt  = mean(xhatRtArray(end-5:end));
 R0   = max(xhatRtArray);
 
-if xhatRt/R0 < 0.25
-    cont = 0.05;
-elseif xhatRt/R0 > 0.25 && xhatRt/R0 < 0.5
-    cont = 0.1;
-else
-    cont = 0.2;
-end
+cont = 0.1;
 
 for m = 1:5
 
@@ -212,7 +206,7 @@ xIpredic(m,:) = [xhatIArray xpIArray];
 
 end
 
-%% Plotting
+% Plotting
 figure(1)
 subplot(3,1,1)
 plot(td,xhatIArray,'LineWidth',6)
@@ -243,6 +237,15 @@ xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))
 grid on
 grid minor
 
+figure(1)
+bar(td,[DATA(:,4) DATA(:,5) DATA(:,6)],'stacked')
+set(gca,'color','none','FontSize',48)
+xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))])
+title('COVID-19 Cases')
+legend('Active Cases','Recovered','Death','Location','northwest')
+grid on
+grid minor
+
 figure(2)
 inBetween = [curve1, fliplr(curve2)];
 fill(x2, inBetween, 'c');
@@ -256,7 +259,7 @@ alpha(0.1)
 hold on;
 plot(td,ones(1,tf),'g','LineWidth',6)
 set(gca,'color','none','FontSize',48)
-text(tf-30,4,['Current Rt = ',num2str(xhatRtArray(end))],'FontSize',48)
+text(tf-35,4,['Current Rt = ',num2str(xhatRtArray(end))],'FontSize',48)
 ylim([0 6])
 xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))])
 legend('Confidence Interval 95%')
@@ -272,6 +275,7 @@ h = pie(XRT,explode,labels);
 set(findobj(h,'type','text'),'fontsize',48)
 title('Contact Index (CI)')
 set(gca,'FontSize',48)
+text(0.225,0,[datestr(datetime(2020,DATA(end,2),DATA(end,1)))],'FontSize',48,'Units','normalized','fontweight','bold')
 
 figure(4)
 plot(tdp,xIpredic(5,:),':c','LineWidth',6)
@@ -285,16 +289,18 @@ hold on;
 plot(tdp,xIpredic(1,:),':r','LineWidth',6)
 set(gca,'color','none','FontSize',48)
 xline(datetime(2020,DATA(end,2),DATA(end,1)),'b','LineWidth',6)
-text(tf-22,0.3*DATA(end,4),'\leftarrow Past','FontSize',48)
-text(tf+2,0.3*DATA(end,4),'Future \rightarrow','FontSize',48)
-legend_str = {'CI = 25%','CI = 20%','CI = 15%','CI = 10%','CI = 5%','Present'};
+text(tf-15,0.3*DATA(end,4),'\leftarrow Past','FontSize',48)
+text(tf,0.3*DATA(end,4),'Future \rightarrow','FontSize',48)
+legend_str = {'CI = 50%','CI = 40%','CI = 30%','CI = 20%','CI = 10%','Present'};
 legend(legend_str(1:5),'Location','northwest')
+xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1)+tp)])
 ylim([0 2*DATA(end,4)])
 title('30-Day Forecast')
 grid on
 grid minor
 
 figure(5)
+sgtitle('COUNTRY','FontSize',48)
 subplot(2,2,1)
 bar(td,[DATA(:,4) DATA(:,5) DATA(:,6)],'stacked')
 set(gca,'color','none','FontSize',24)
@@ -333,6 +339,7 @@ h = pie(XRT,explode,labels);
 set(findobj(h,'type','text'),'fontsize',24)
 title('Contact Index (CI)')
 set(gca,'FontSize',24)
+text(0.225,-0.1,[datestr(datetime(2020,DATA(end,2),DATA(end,1)))],'FontSize',24,'Units','normalized','fontweight','bold')
 
 subplot(2,2,4)
 plot(tdp,xIpredic(5,:),':c','LineWidth',6)
@@ -346,11 +353,12 @@ hold on;
 plot(tdp,xIpredic(1,:),':r','LineWidth',6)
 set(gca,'color','none','FontSize',24)
 xline(datetime(2020,DATA(end,2),DATA(end,1)),'b','LineWidth',6)
-text(tf-25,0.3*DATA(end,4),'\leftarrow Past','FontSize',24)
+text(tf-18,0.3*DATA(end,4),'\leftarrow Past','FontSize',24)
 text(tf+2,0.3*DATA(end,4),'Future \rightarrow','FontSize',24)
-legend_str = {'CI = 25%','CI = 20%','CI = 15%','CI = 10%','CI = 5%','Present'};
+legend_str = {'CI = 50%','CI = 40%','CI = 30%','CI = 20%','CI = 10%','Present'};
 legend(legend_str(1:5),'Location','northwest')
-ylim([0 2*DATA(end,4)])
+xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1)+tp)])
+ylim([0 5*DATA(end,4)])
 title('30-Day Forecast')
 grid on
 grid minor
