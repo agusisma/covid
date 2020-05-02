@@ -237,7 +237,7 @@ xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))
 grid on
 grid minor
 
-figure(1)
+figure(2)
 bar(td,[DATA(:,4) DATA(:,5) DATA(:,6)],'stacked')
 set(gca,'color','none','FontSize',48)
 xlim([datetime(2020,DATA(1,2),DATA(1,1)), datetime(2020,DATA(end,2),DATA(end,1))])
@@ -246,7 +246,7 @@ legend('Active Cases','Recovered','Death','Location','northwest')
 grid on
 grid minor
 
-figure(2)
+figure(3)
 inBetween = [curve1, fliplr(curve2)];
 fill(x2, inBetween, 'c');
 alpha(0.5)
@@ -267,7 +267,7 @@ title('Real-Time Reproduction Number (Rt)')
 grid on
 grid minor
 
-figure(3)
+figure(4)
 XRT = [1-(xhatRt/R0) xhatRt(end)/R0];
 explode=[1 0];
 labels = {'',['Current CI = ' num2str(round((xhatRt(end)/R0)*100)) '%']};
@@ -277,7 +277,7 @@ title('Contact Index (CI)')
 set(gca,'FontSize',48)
 text(0.225,0,[datestr(datetime(2020,DATA(end,2),DATA(end,1)))],'FontSize',48,'Units','normalized','fontweight','bold')
 
-figure(4)
+figure(5)
 plot(tdp,xIpredic(5,:),':c','LineWidth',6)
 hold on;
 plot(tdp,xIpredic(4,:),':g','LineWidth',6)
@@ -299,7 +299,7 @@ title('30-Day Forecast')
 grid on
 grid minor
 
-figure(5)
+figure(6)
 sgtitle('COUNTRY','FontSize',48)
 subplot(2,2,1)
 bar(td,[DATA(:,4) DATA(:,5) DATA(:,6)],'stacked')
